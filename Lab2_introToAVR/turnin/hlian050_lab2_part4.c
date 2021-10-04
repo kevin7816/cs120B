@@ -28,6 +28,7 @@ int main(void) {
 	seat2 = PINB;
 	seat3 = PINC;
 	output = (seat1 + seat2) + seat3;
+	output = output >> 2;
 
 	if(output > 0x8C){
 	output = output | 0x01;
