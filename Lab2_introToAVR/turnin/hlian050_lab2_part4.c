@@ -22,15 +22,16 @@ int main(void) {
     unsigned char seat1 = 0x00;
     unsigned char seat2 = 0x00;
     unsigned char seat3 = 0x00;
-    unsigned char output = 0x00;;
+    unsigned char output = 0x00;
+    unsigned char weight = 0x00;
     while (1) {
 	seat1 = PINA;
 	seat2 = PINB;
 	seat3 = PINC;
-	output = (seat1 + seat2) + seat3;
-	output = output >> 2;
+	weight = seat1 + seat2 + seat3;
+	output = weight >> 2;
 
-	if(output > 0x8C){
+	if(weight > 0x8C){
 	output = output | 0x01;
 	} else {
 	output = output & 0xFE;
