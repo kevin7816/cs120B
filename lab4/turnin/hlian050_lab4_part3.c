@@ -14,14 +14,14 @@
 
 void Tick(unsigned char input);
 
-enum states {START, X, Y, PRESS, RELEASED} state;
+enum states {START, X, Y, PRESS, RELEASED, UNLOCKED} state;
 unsigned char count1, count2, count3, count4 = 0x00;
 int main(void) {
     /* Insert DDR and PORT initializations */
 	DDRA = 0x00; PORTA=0xFF;
 	DDRB = 0xFF; PORTB=0x00;
 	unsigned char input,temp = 0x00;
-	state = START;
+	state = PRESS;
     /* Insert your solution below */
     while (1) {
 	input = PINA;
@@ -60,12 +60,19 @@ void Tick(unsigned char input) {
 
 	case Y:
 		if(input == 0x02){
-		PORTB = 0x01;
-		count3++;
+		state = Y;
+		} else if (input == 0x00){
+		state = UNLOCKED;
 		}
+		else {
 		count4++;
 		state = PRESS;
+		}
 		break;
+
+	case UNLOCKED: 
+		PORTB = 0x01;
+		state = PRESS;
 
 	case X: 
 		state = PRESS;
