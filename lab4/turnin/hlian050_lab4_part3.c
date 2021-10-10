@@ -21,7 +21,7 @@ int main(void) {
 	DDRA = 0x00; PORTA=0xFF;
 	DDRB = 0xFF; PORTB=0x00;
 	unsigned char input,temp = 0x00;
-	state = START;
+	state = PRESS;
     /* Insert your solution below */
     while (1) {
 	input = PINA;
