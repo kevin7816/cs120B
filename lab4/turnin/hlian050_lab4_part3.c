@@ -52,9 +52,11 @@ void Tick(unsigned char input) {
 		if(input == 0x00){
 		state = Y;
 		count1++;
-		} else {
+		} else if (input ==0x04){
 		count2++;
 		state = RELEASED;
+		} else {
+		state = PRESS;			
 		}
 		break;
 
