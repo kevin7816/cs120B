@@ -62,10 +62,9 @@ void Tick(unsigned char input) {
 		if(input == 0x02){
 		PORTB = 0x01;
 		count3++;
-		} else {
+		}
 		count4++;
 		state = PRESS;
-		}
 		break;
 
 	case X: 
