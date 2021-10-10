@@ -54,7 +54,7 @@ void Tick(unsigned char input) {
 		count1++;
 		} else {
 		count2++;
-		state = PRESS;
+		state = RELEASED;
 		}
 		break;
 
