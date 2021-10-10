@@ -14,7 +14,7 @@
 
 void Tick(unsigned char input);
 
-enum states {START, X, Y, PRESS, RELEASED} state;
+enum states {START, X, Y, PRESS, RELEASED, UNLOCKED} state;
 unsigned char count1, count2, count3, count4 = 0x00;
 int main(void) {
     /* Insert DDR and PORT initializations */
@@ -51,25 +51,34 @@ void Tick(unsigned char input) {
 	case RELEASED:
 		if(input == 0x00){
 		state = Y;
+		count1++;
+		} else if (input ==0x04){
+		count2++;
+		state = RELEASED;
 		} else {
-		state = PRESS;
+		state = PRESS;			
 		}
 		break;
 
 	case Y:
 		if(input == 0x02){
-		    if(PORTB == 0x00){
-			count1++;
-			PORTB = 0x01;
-		    } else {
-			count2++;
-		        PORTB = 0X00;
-		    }
-		count3++;
+		state = Y;
+		} else if (input == 0x00){
+		state = UNLOCKED;
 		}
+		else {
 		count4++;
 		state = PRESS;
+		}
 		break;
+			
+	case UNLOCKED: 
+		if( PORTB == 0x01){
+		PORTB =	0x00;
+		} else {
+		PORTB = 0x01;	
+		}
+		state = PRESS;
 
 	case X: 
 		state = PRESS;
