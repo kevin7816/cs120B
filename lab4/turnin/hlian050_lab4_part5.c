@@ -91,13 +91,11 @@ void Tick(unsigned char input) {
 		state = X;
 		}
 		else if(input == 0x01 && xflag == 2){
-		xflag++;
-		state = X;
-		}
-		else if(input == 0x00 && xflag == 3){
 		xflag = 0;
-		state = UNLOCKED;
-		} else {
+		PORTB = 0x01;
+		state = PRESS;
+		}
+		else {
 		state = PRESS;
 		}
 		break;
