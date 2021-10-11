@@ -40,10 +40,13 @@ void Tick(unsigned char input) {
 	
 	case CONTROL:
 		if(input == 0x03){
+		PORTC = 0x00;
 		state = RESET;
-		} else if(input == 0x01 ){
+		} else if(input == 0x01 && PORTC < 9){
+		PORTC++;	
 		state = ADD;
-		} else if(input == 0x02 ){
+		} else if(input == 0x02 && PORTC > 0){
+		PORTC--;
 		state = SUB;
 		} else {
 		break;
@@ -51,21 +54,37 @@ void Tick(unsigned char input) {
 		break;
 
 	case ADD:
-		if(PORTC < 9){
-		PORTC++;
-		}
+		if(input == 0x03){
+		PORTC = 0;
+		state = RESET;
+		} else {
+		if (input != 0x01){
 		state = CONTROL;
+		} else {
+		state = ADD;
+		}
+		}
 		break;
 
 	case SUB:
-		if(PORTC > 0){
-		PORTC--;
-		}
+		if(input == 0x03){
+		PORTC =0;
+		state = RESET;
+		} else {
+		if(input != 0x02){
 		state = CONTROL;
+		} else {
+		state = SUB;
+		}
+		}
 		break;
 
 	case RESET: 
-		PORTC = 0x00;
+		if(input == 0x03){
+		state = RESET;
+		} else {
+		state = CONTROL;
+		}
 		break;
 
 	default:
