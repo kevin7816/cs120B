@@ -1,4 +1,4 @@
-/*	Author: lab
+/*	Author: Kevin Liang
  *  Partner(s) Name: 
  *	Lab Section:
  *	Assignment: Lab #  Exercise #
@@ -6,6 +6,8 @@
  *
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
+ *
+ *	youtube link: https://youtu.be/XQWaZeqxb8M
  */
 #include <avr/io.h>
 #include <avr/interrupt.h>
