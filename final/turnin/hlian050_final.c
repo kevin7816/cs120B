@@ -6,6 +6,11 @@
  *
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
+ *
+ *	Youtube: https://youtu.be/Z-NP0wR48hk
+ *
+ *	I hooked up my LED Matrix to the microcontroller and shift register. I have the display being the basic movement of the targets for my game. 
+ *	I still need to implement the joystick for player movement, add a button to fire at the moving targets, keep score of how many targets destoryed and display it on LCD screen.
  */
 #include <avr/io.h>
 #ifdef _SIMULATE_
