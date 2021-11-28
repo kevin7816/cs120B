@@ -25,11 +25,16 @@ void transmit_data(unsigned char data) {
 	PORTC |= 0x04;
 	PORTC = 0x00;
 }
+
+void A2D_init(){
+	ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADATE);
+}
+
 unsigned char left, right, col, row =0x00;
-enum displayStates{START, INIT, LEFT, RIGHT, DOWN, END};
-int DisplayTick(int state) {
+enum alienStates{ALIENSTART, INIT, LEFT, RIGHT, DOWN, END};
+int AlienTick(int state) {
 	switch(state) {
-		case START:
+		case ALIENSTART:
 			state = INIT;
 			break;
 		case INIT:
@@ -70,7 +75,7 @@ int DisplayTick(int state) {
 	}
 
 	switch(state) {
-                case START:
+                case ALIENSTART:
                         break;
                 case INIT:
 			row = 0xE3;
@@ -102,24 +107,129 @@ int DisplayTick(int state) {
 	return state;
 }
 
+unsigned short input = ADC;
+unsigned char movement = 0x00;
+enum joystickStates{JOYSTART,SPOT1,SPOT2,SPOT3,SPOT4,SPOT5};
+int JoystickTick(int state){
+
+	switch(state){
+		case JOYSTART:
+			state = SPOT1;
+			break;
+		case SPOT1:
+			if(input > 900){
+				state = SPOT2;
+			}
+			break;
+		case SPOT2:
+			if(input > 900){
+				state = SPOT3;
+			} else if(input < 300){
+				state = SPOT1;
+			}
+			break;
+		case SPOT3:
+			if(input > 900){
+				state = SPOT4;
+			} else if(input < 300){
+				state = SPOT2;
+			}
+			break;
+		case SPOT4:
+			if(input > 900){
+				state = SPOT5;
+			} else if(input < 300){
+			        state = SPOT3;
+			}
+	 		break;
+		case SPOT5:
+			if(input < 300){
+				state = SPOT4;
+			}
+			break;
+		default:
+			break;
+	}
+
+	switch(state){
+		case JOYSTART:
+			break;
+		case SPOT1:
+			movement = 0xFE;
+			break;
+		case SPOT2:
+			movement = 0xFD;
+			break;
+		case SPOT3:
+			movement = 0xFB;
+			break;
+		case SPOT4:
+			movement = 0xF7;
+			break;
+		case SPOT5:
+			movement = 0xEF;
+			break;
+		default:
+			break;
+	}
+	return state;
+}
+
+enum displayStates{START,DISPLAY};
+int DisplayTick(state) {
+	
+	switch(state){
+		case START:
+			state = START;
+			break;
+		case DISPLAY:
+			state = DISPLAY;
+			break;
+	}
+
+	switch(state){
+		case START:
+			break;
+		case DISPLAY:
+			PORTD = movement;
+			transmit_data(0x80);
+			_delay_ms(10);
+			break;
+		default:
+			break;
+	}
+	return state;
+}
+
 int main(void) {
     /* Insert DDR and PORT initializations */
 	DDRA = 0x00; PORTA = 0xFF;
 	DDRC = 0xFF; PORTB = 0x00;
 	DDRD = 0xFF; PORTD = 0x00;
 
-	static task task1;
-	task *tasks[] = {&task1};
+	static task task1, task2;
+	task *tasks[] = {&task1, &task2};
 	const unsigned short numTasks = sizeof(tasks) / sizeof(task*);
 	const char start = 0;
 
 	task1.state=start;
 	task1.period=500;
 	task1.elapsedTime = task1.period;
-	task1.TickFct = &DisplayTick;
+	task1.TickFct = &AlienTick;
+
+	task2.state=start;
+	task2.period=500;
+	task2.elapsedTime= task2.period;
+	task2.TickFct = &JoystickTick;
+
+	task3.state=start;
+	task3.period=500;
+	task3.elaspedTime=task3.period;
+	task3.TickFct = &DisplayTick;
 
 	TimerSet(500);
 	TimerOn();
+	A2D_init();
 	unsigned short i;
 	while(1){
 	for (i =0; i< numTasks; i++) {
