@@ -6,14 +6,10 @@
  *
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
- *
- *	Youtube: https://youtu.be/Z-NP0wR48hk
- *
- *	I hooked up my LED Matrix to the microcontroller and shift register. I have the display being the basic movement of the targets for my game. 
- *	I still need to implement the joystick for player movement, add a button to fire at the moving targets, keep score of how many targets destoryed and display it on LCD screen.
  */
 #include <avr/io.h>
 #ifdef _SIMULATE_
+#include <util/delay.h>
 #include "simAVRHeader.h"
 #include "scheduler.h"
 #include "timer.h"
@@ -84,25 +80,25 @@ int AlienTick(int state) {
                         break;
                 case INIT:
 			row = 0xE3;
-			PORTD = row;
+			//PORTD = row;
 			col = 0x07;
-			transmit_data(col);
+			//transmit_data(col);
                         break;
                 case LEFT:
 			row = row << 1;
 			row = row | (0x01);
-			PORTD = row;
-			transmit_data(col);
+			//PORTD = row;
+			//transmit_data(col);
                         break;
                 case RIGHT:
 			row = row >> 1;
-			PORTD = row;
-			transmit_data(col);
+			//PORTD = row;
+			//transmit_data(col);
                         break;
                 case DOWN:
-			PORTD = row;
+			//PORTD = row;
 			col = col << 1;
-			transmit_data(col);
+			//transmit_data(col);
                         break;
                 case END:
                         break;
@@ -112,11 +108,12 @@ int AlienTick(int state) {
 	return state;
 }
 
-unsigned short input = ADC;
 unsigned char movement = 0x00;
 enum joystickStates{JOYSTART,SPOT1,SPOT2,SPOT3,SPOT4,SPOT5};
 int JoystickTick(int state){
 
+	ADMUX = 0xC0;
+	unsigned short input = ADC;
 	switch(state){
 		case JOYSTART:
 			state = SPOT1;
@@ -185,7 +182,7 @@ int DisplayTick(state) {
 	
 	switch(state){
 		case START:
-			state = START;
+			state = DISPLAY;
 			break;
 		case DISPLAY:
 			state = DISPLAY;
@@ -198,7 +195,9 @@ int DisplayTick(state) {
 		case DISPLAY:
 			PORTD = movement;
 			transmit_data(0x80);
-			_delay_ms(10);
+			_delay_ms(100);
+			PORTD = row;
+			transmit_data(col);
 			break;
 		default:
 			break;
@@ -212,27 +211,27 @@ int main(void) {
 	DDRC = 0xFF; PORTB = 0x00;
 	DDRD = 0xFF; PORTD = 0x00;
 
-	static task task1, task2;
-	task *tasks[] = {&task1, &task2};
+	static task task1, task2, task3;
+	task *tasks[] = {&task1, &task2, &task3};
 	const unsigned short numTasks = sizeof(tasks) / sizeof(task*);
 	const char start = 0;
 
 	task1.state=start;
-	task1.period=500;
+	task1.period=700;
 	task1.elapsedTime = task1.period;
 	task1.TickFct = &AlienTick;
 
 	task2.state=start;
-	task2.period=500;
+	task2.period=200;
 	task2.elapsedTime= task2.period;
 	task2.TickFct = &JoystickTick;
 
 	task3.state=start;
-	task3.period=500;
-	task3.elaspedTime=task3.period;
+	task3.period=200;
+	task3.elapsedTime=task3.period;
 	task3.TickFct = &DisplayTick;
 
-	TimerSet(500);
+	TimerSet(100);
 	TimerOn();
 	A2D_init();
 	unsigned short i;
@@ -242,7 +241,7 @@ int main(void) {
 		tasks[i]->state = tasks[i]->TickFct(tasks[i]->state);
 		tasks[i]->elapsedTime = 0;
 	}
-	tasks[i]->elapsedTime += 500;
+	tasks[i]->elapsedTime += 100;
 	}
 	while(!TimerFlag);
 	TimerFlag=0;
