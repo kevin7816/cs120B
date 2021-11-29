@@ -6,6 +6,10 @@
  *
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
+ *
+ *	Youtube: https://youtu.be/zBVQDg5YvCU
+ *	I implemented the joystick to show user input movement on the LED matrix. All that is left is to hook up a button to shoot at the targets and implement game logic with 
+ *	concurrent SMs.
  */
 #include <avr/io.h>
 #ifdef _SIMULATE_
