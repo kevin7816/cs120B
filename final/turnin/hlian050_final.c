@@ -35,7 +35,7 @@ void A2D_init(){
 	ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADATE);
 }
 
-unsigned char left, right, col, row =0x00;
+unsigned char left, right, col1, col2, col3, row1, row2, row3, end, score =0x00;
 enum alienStates{ALIENSTART, INIT, LEFT, RIGHT, DOWN, END};
 int AlienTick(int state) {
 	switch(state) {
@@ -52,7 +52,7 @@ int AlienTick(int state) {
 				state = LEFT;
 				left++;
 			}
-			if((col & 0x80) == 0x80){
+			if((col3 & 0x80) == 0x80){
 				state = END;
 			}
 			break;
@@ -72,8 +72,18 @@ int AlienTick(int state) {
 				left = 0;
 				state = RIGHT;
 			}
+			if((col3 & 0x80) == 0x80){
+				state = END;
+			}
+			if((col2 & 0x80) == 0x80){
+                                state = END;
+                        }
+			if((col1 & 0x80) == 0x80){
+                                state = END;
+                        }
 			break;
 		case END:
+			state = END;
 			break;
 		default: 
 			break;
@@ -83,28 +93,42 @@ int AlienTick(int state) {
                 case ALIENSTART:
                         break;
                 case INIT:
-			row = 0xE3;
+			row1 = 0xE3;
+			row2 = 0xE3;
+			row3 = 0xE3;
 			//PORTD = row;
-			col = 0x07;
+			col1 = 0x01;
+			col2 = 0x02;
+			col3 = 0x04;
 			//transmit_data(col);
                         break;
                 case LEFT:
-			row = row << 1;
-			row = row | (0x01);
+			row1 = row1 << 1;
+			row1 = row1 | (0x01);
+			row2 = row2 << 1;
+			row2 = row2 | (0x01);
+			row3 = row3 << 1;
+			row3 = row3 | (0x01);
 			//PORTD = row;
 			//transmit_data(col);
                         break;
                 case RIGHT:
-			row = row >> 1;
+			row1 = row1 >> 1;
+			row2 = row2 >> 1;
+			row3 = row3 >> 1;
 			//PORTD = row;
 			//transmit_data(col);
                         break;
                 case DOWN:
 			//PORTD = row;
-			col = col << 1;
+			col1 = col1 << 1;
+			col2 = col2 << 1;
+			col3 = col3 << 1;
 			//transmit_data(col);
                         break;
                 case END:
+			end = 1;
+			PORTD = score;	
                         break;
 		default:
 			break;
@@ -180,8 +204,8 @@ int JoystickTick(int state){
 	}
 	return state;
 }
-
-enum displayStates{START,DISPLAY};
+unsigned char shot, shootRow, shootCol = 0x00;
+enum displayStates{START,DISPLAY, DONE};
 int DisplayTick(state) {
 	
 	switch(state){
@@ -189,8 +213,14 @@ int DisplayTick(state) {
 			state = DISPLAY;
 			break;
 		case DISPLAY:
+			if(end ==1){
+			       state = DONE;
+			} else {	       
 			state = DISPLAY;
+			}
 			break;
+		case DONE:
+			state = DONE;
 	}
 
 	switch(state){
@@ -200,8 +230,21 @@ int DisplayTick(state) {
 			PORTD = movement;
 			transmit_data(0x80);
 			_delay_ms(100);
-			PORTD = row;
-			transmit_data(col);
+			if(shot == 1){
+				PORTD = shootRow;
+				transmit_data(shootCol);
+				_delay_ms(100);
+			}
+			PORTD = row1;
+			transmit_data(col1);
+			_delay_ms(300);
+			PORTD = row2;
+			transmit_data(col2);
+			_delay_ms(300);
+			PORTD = row3;
+			transmit_data(col3);
+			break;
+		case DONE:
 			break;
 		default:
 			break;
@@ -209,19 +252,103 @@ int DisplayTick(state) {
 	return state;
 }
 
+unsigned char elimRow, elimCol = 0x00;
+unsigned char moves, hitFlag, input1 = 0x00;
+enum shooterStates{SHOOTSTART, SHOOTINIT, PRESS, FIRED, HIT};
+int ShooterTick(state) {
+
+	switch(state){
+		case SHOOTSTART:
+			state = SHOOTINIT;
+			break;
+		case SHOOTINIT:
+			if((input1 & 0x04) == 0x04){
+				state = PRESS;
+			} else {
+				state = SHOOTINIT;
+			}
+			break;
+		case PRESS: 
+			state = FIRED;
+			break;
+		case FIRED:
+			if(hitFlag == 1){
+				state = HIT;
+			} else if (moves == 7) {
+				state = SHOOTINIT;
+			} else {
+				moves++;
+				state = FIRED;
+			}
+			break;
+		case HIT:
+			state = SHOOTINIT;
+			break;
+
+	}
+
+	switch(state){
+		case SHOOTSTART:
+			score = 0;
+			break;
+		case SHOOTINIT:
+			moves = 0;
+			shot = 0;
+			hitFlag = 0;
+			break;
+		case PRESS:
+			shootRow = movement;
+			shootCol = 0x40;
+			shot = 1;
+			break;
+		case FIRED:
+			if(((shootCol & col3) == shootCol) && ((~shootRow & ~row3) == ~shootRow )){
+				hitFlag = 1;
+				elimRow = (~shootRow & ~row3);
+				row3 = (row3 | elimRow);
+			} else if (((shootCol & col2) == shootCol) && ((~shootRow & ~row2) == ~shootRow)){
+				hitFlag = 1;
+				elimRow = (~shootRow & ~row2);
+				row2 = (row2 | elimRow);
+			} else if (((shootCol & col1) == shootCol) && ((~shootRow & ~row1) == ~shootRow)){
+				hitFlag = 1;
+				elimRow = (~shootRow & ~row1);
+				row1 = (row1 | elimRow);
+			} else {
+				shootCol = shootCol >> 1;
+			}
+			break;
+		case HIT:
+			if(row3 == 0xFF){
+				col3 = 0x00;
+			}
+			if(row2 == 0xFF){
+				col2 = 0x00;
+			}
+			if(row1 == 0xFF){
+				col1 = 0x00;
+			}
+			shot = 0;
+			score++;
+			break;
+	}
+	return state;
+}
+
+
 int main(void) {
     /* Insert DDR and PORT initializations */
 	DDRA = 0x00; PORTA = 0xFF;
 	DDRC = 0xFF; PORTB = 0x00;
 	DDRD = 0xFF; PORTD = 0x00;
 
-	static task task1, task2, task3;
-	task *tasks[] = {&task1, &task2, &task3};
+	static task task1, task2, task3, task4;
+	task *tasks[] = {&task1, &task2, &task3, &task4};
 	const unsigned short numTasks = sizeof(tasks) / sizeof(task*);
 	const char start = 0;
 
 	task1.state=start;
-	task1.period=700;
+	task1.period=1000;
 	task1.elapsedTime = task1.period;
 	task1.TickFct = &AlienTick;
 
@@ -233,9 +360,14 @@ int main(void) {
 	task3.state=start;
 	task3.period=200;
 	task3.elapsedTime=task3.period;
-	task3.TickFct = &DisplayTick;
+	task3.TickFct = &ShooterTick;
 
-	TimerSet(100);
+	task4.state=start;
+	task4.period=200;
+	task4.elapsedTime=task4.period;
+	task4.TickFct = &DisplayTick;
+
+	TimerSet(10);
 	TimerOn();
 	A2D_init();
 	unsigned short i;
@@ -247,6 +379,7 @@ int main(void) {
 	}
 	tasks[i]->elapsedTime += 100;
 	}
+	input1 = ~PINA;
 	while(!TimerFlag);
 	TimerFlag=0;
 	}
